@@ -27,86 +27,94 @@ const ProductDetails = ({ addToCart }) => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <nav className="text-sm text-gray-500 mb-6">
+    <div className="max-w-[1400px] mx-auto px-4 py-8">
+      <nav className="text-sm text-gray-500 mb-8">
         <span className="hover:text-gray-700 cursor-pointer">Home</span>
         <span className="mx-2">/</span>
         <span className="hover:text-gray-700 cursor-pointer">
           {product.category}
         </span>
         <span className="mx-2">/</span>
-        <span className="text-gray-900 font-medium">{product.title}</span>
+        <span className="text-gray-900 font-medium">
+          {product.title}
+        </span>
       </nav>
-      {/* Left Side */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        <div className="bg-white rounded-xl p-6 shadow-sm">
-          <div className="h-96 bg-gray-100 flex items-center justify-center rounded-lg">
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <div className="bg-white rounded-2xl shadow-sm p-8">
+          <div className="h-[420px] bg-gray-100 rounded-xl flex items-center justify-center">
             <span className="text-gray-400">Product Image</span>
           </div>
         </div>
 
-        {/* Right Side Info */}
         <div>
           <h1 className="text-3xl font-semibold text-gray-900">
             {product.title}
           </h1>
-          {/* Rating */}
-          <div className="flex items-center gap-2 mt-2">
-            <div className="flex">
+
+          <div className="flex items-center gap-3 mt-3">
+            <div className="flex text-yellow-500">
               {[...Array(5)].map((_, i) => (
-                <span key={i} className="text-yellow-500">
+                <span key={i}>
                   {i < Math.floor(product.rating) ? "★" : "☆"}
                 </span>
               ))}
             </div>
+
             <span className="text-sm text-gray-500">
-              ({product.reviews} reviews)
+              {product.rating} · {product.reviews} reviews
             </span>
           </div>
 
-          {/* Price */}
-          <p className="text-2xl font-bold text-gray-900 mt-4">
+          <p className="text-3xl font-bold text-gray-900 mt-6">
             ₹{product.price}
           </p>
 
-          {/* Description */}
-          <p className="text-gray-600 mt-4 leading-relaxed">
+          <p className="text-gray-600 mt-4 leading-relaxed max-w-xl">
             {product.description}
           </p>
 
-          {/* Quantity */}
-          <div className="mt-6 flex items-center gap-4">
-            <span className="font-medium">Quantity</span>
-            <div className="flex items-center border rounded-lg">
+          <div className="mt-8 flex items-center gap-6">
+            <span className="font-medium text-gray-900">
+              Quantity
+            </span>
+
+            <div className="flex items-center border rounded-xl overflow-hidden">
               <button
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="px-4 py-2 cursor-pointer"
+                className="px-4 py-2 hover:bg-gray-100 transition"
               >
-                -
+                −
               </button>
-              <span className="px-4">{quantity}</span>
+
+              <span className="px-6 font-medium">{quantity}</span>
+
               <button
                 onClick={() => setQuantity((q) => q + 1)}
-                className="px-4 py-2 cursor-pointer"
+                className="px-4 py-2 hover:bg-gray-100 transition"
               >
                 +
               </button>
             </div>
           </div>
 
-          {/* Add to Cart */}
           <button
             onClick={() => addToCart(product, quantity)}
-            className="mt-6 w-full bg-[#1F3A8A] text-white py-3 rounded-lg hover:bg-[#1E40AF] transition"
+            className="mt-8 w-full max-w-md bg-[#6d5dfc] text-white py-4 rounded-xl font-medium hover:opacity-90 transition"
           >
             Add to Cart
           </button>
 
-          {/* reviews */}
-          <div className="mt-10 border-t pt-6">
-            <h3 className="text-lg font-semibold mb-4">Customer Reviews</h3>
-            <div className="flex items-center gap-4">
-              <span className="text-3xl font-bold">{product.rating}</span>
+          <div className="mt-12 border-t pt-8">
+            <h3 className="text-xl font-semibold mb-4">
+              Customer Reviews
+            </h3>
+
+            <div className="flex items-center gap-5">
+              <span className="text-4xl font-bold text-gray-900">
+                {product.rating}
+              </span>
+
               <div>
                 <div className="flex text-yellow-500">
                   {[...Array(5)].map((_, i) => (
@@ -115,33 +123,40 @@ const ProductDetails = ({ addToCart }) => {
                     </span>
                   ))}
                 </div>
-                <p className="text-sm text-gray-500">
+
+                <p className="text-sm text-gray-500 mt-1">
                   Based on {product.reviews} reviews
                 </p>
               </div>
             </div>
           </div>
-          {similarProducts.length > 0 && (
-            <div className="mt-16">
-              <h2 className="text-2xl font-semibold mb-6">Similar products</h2>
-
-              <div
-                ref={scrollRef}
-                onWheel={handleWheel}
-                className="overflow-x-auto"
-              >
-                <div className="flex gap-6 w-max">
-                  {similarProducts.map((item) => (
-                    <div key={item.id} className="w-62.5 shrink-0">
-                      <ProductCard product={item} addToCart={addToCart} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
+
+      {similarProducts.length > 0 && (
+        <div className="mt-20">
+          <h2 className="text-2xl font-semibold mb-6">
+            Similar Products
+          </h2>
+
+          <div
+            ref={scrollRef}
+            onWheel={handleWheel}
+            className="overflow-x-auto"
+          >
+            <div className="flex gap-6 w-max pb-2">
+              {similarProducts.map((item) => (
+                <div key={item.id} className="w-[260px] shrink-0">
+                  <ProductCard
+                    product={item}
+                    addToCart={addToCart}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

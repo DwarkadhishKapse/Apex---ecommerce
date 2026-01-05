@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import products from "../data/products";
 import { Link, useNavigate } from "react-router-dom";
+import MiniCart from "./MiniCart";
 
 const Navbar = ({
   cartCount,
@@ -8,19 +9,43 @@ const Navbar = ({
   setIsAuthenticated,
   searchQuery,
   setSearchQuery,
+  cart,
+  isMiniCartOpen,
+  setIsMiniCartOpen,
+  increaseQuantity,
+  decreaseQuantity,
+  removeItem,
+  wishlistCount,
+  ordersCount,
 }) => {
   const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(-1);
+  const miniCartWrapperRef = useRef(null);
 
   useEffect(() => {
     setActiveIndex(-1);
   }, [searchQuery]);
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        isMiniCartOpen &&
+        miniCartWrapperRef.current &&
+        !miniCartWrapperRef.current.contains(e.target)
+      ) {
+        setIsMiniCartOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
+  }, [isMiniCartOpen]);
+
   const suggestions =
     searchQuery.length > 0
       ? products
-          .filter((product) =>
-            product.title.toLowerCase().includes(searchQuery.toLowerCase())
+          .filter((p) =>
+            p.title.toLowerCase().includes(searchQuery.toLowerCase())
           )
           .slice(0, 6)
       : [];
@@ -48,26 +73,25 @@ const Navbar = ({
       setSearchQuery("");
     }
   };
+
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        {/* Brand */}
-        <h1 className="text-xl font-semibold text-gray-900">
-          Apex<span className="text-[#1F3A8A]">Store</span>
+    <nav className="bg-white sticky top-0 z-[60] border-b">
+      <div className="max-w-350 mx-auto px-4 py-4 flex items-center gap-6">
+        <h1 className="text-xl font-semibold">
+          Apex<span className="text-[#6d5dfc]">Store</span>
         </h1>
 
-        <div className="relative flex-1 mx-6">
+        <div className="relative flex-1 z-[70]">
           <input
-            type="text"
-            placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1F3A8A]"
+            placeholder="Search for products, brands and more"
+            className="w-full px-5 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#6d5dfc] outline-none"
           />
 
           {suggestions.length > 0 && (
-            <div className="absolute top-full left-0 w-full bg-white border rounded-lg shadow-lg mt-1 z-50">
+            <div className="absolute top-full left-0 w-full bg-white border rounded-xl shadow-xl mt-2 z-[80] overflow-hidden">
               {suggestions.map((item, index) => (
                 <div
                   key={item.id}
@@ -75,38 +99,59 @@ const Navbar = ({
                     navigate(`/product/${item.id}`);
                     setSearchQuery("");
                   }}
-                  className={`px-4 py-3 cursor-pointer flex justify-between ${
-                    index === activeIndex ? "bg-gray-100" : "hover:bg-gray-50"
+                  className={`px-4 py-3 flex justify-between cursor-pointer ${
+                    index === activeIndex
+                      ? "bg-gray-100"
+                      : "hover:bg-gray-50"
                   }`}
                 >
-                  <span className="text-sm">{item.title}</span>
-                  <span className="text-sm text-gray-500">{item.price}</span>
+                  <span>{item.title}</span>
+                  <span className="text-gray-500">₹{item.price}</span>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-4">
-          <Link to="/cart" className="relative">
-            Cart{" "}
-            {cartCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 rounded-full">
-                {cartCount}
-              </span>
-            )}
-          </Link>
+        <Link to="/wishlist" className="relative">
+          ❤️
+          {wishlistCount > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 rounded-full">
+              {wishlistCount}
+            </span>
+          )}
+        </Link>
 
-          {isAuthenticated ? (
-            <button onClick={handleLogout} className="text-sm text-red-600">
-              Logout
-            </button>
-          ) : (
-            <Link to="/login" className="text-sm text-[#1F3A8A]">
-              Login
-            </Link>
+        <div ref={miniCartWrapperRef} className="relative">
+          <button onClick={() => setIsMiniCartOpen((p) => !p)}>
+            Cart
+            {cartCount > 0 && (
+              <span className="ml-1 text-sm">({cartCount})</span>
+            )}
+          </button>
+
+          {isMiniCartOpen && (
+            <MiniCart
+              cart={cart}
+              increaseQuantity={increaseQuantity}
+              decreaseQuantity={decreaseQuantity}
+              removeItem={removeItem}
+              setIsMiniCartOpen={setIsMiniCartOpen}
+            />
           )}
         </div>
+
+        <Link to="/orders">Orders ({ordersCount})</Link>
+
+        {isAuthenticated ? (
+          <button onClick={handleLogout} className="text-red-600">
+            Logout
+          </button>
+        ) : (
+          <Link to="/login" className="text-[#6d5dfc]">
+            Login
+          </Link>
+        )}
       </div>
     </nav>
   );

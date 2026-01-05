@@ -2,7 +2,14 @@ import React from "react";
 import { Link } from "react-router-dom";
 import StarRating from "./StarRating";
 
-const ProductCard = ({ product, addToCart, searchQuery }) => {
+const ProductCard = ({
+  product,
+  addToCart,
+  searchQuery,
+  wishlist = [],
+  addToWishlist,
+  removeFromWishlist,
+}) => {
   const highlightText = (text, query) => {
     if (!query) return text;
 
@@ -11,7 +18,7 @@ const ProductCard = ({ product, addToCart, searchQuery }) => {
 
     return parts.map((part, index) =>
       part.toLowerCase() === query.toLowerCase() ? (
-        <span key={index} className="bg-yellow-200 text-gray-900 px-1 rounded">
+        <span key={index} className="bg-yellow-200 rounded px-1">
           {part}
         </span>
       ) : (
@@ -20,40 +27,59 @@ const ProductCard = ({ product, addToCart, searchQuery }) => {
     );
   };
 
+  const isWishListed =
+    wishlist?.some((item) => item.product.id === product.id) || false;
+
   return (
-    <Link to={`/product/${product.id}`}>
-      <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden">
-        {/* Image */}
-        <div className="h-48 bg-gray-100 flex items-center justify-center">
+    <div className="relative bg-white rounded-2xl border hover:shadow-lg transition overflow-hidden">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          isWishListed
+            ? removeFromWishlist(product.id)
+            : addToWishlist(product);
+        }}
+        className="absolute top-4 right-4 z-10 text-xl bg-white rounded-full w-9 h-9 flex items-center justify-center shadow"
+      >
+        {isWishListed ? "❤️" : "🤍"}
+      </button>
+
+      <Link to={`/product/${product.id}`} className="block">
+        <div className="h-56 bg-gray-100 flex items-center justify-center">
           <span className="text-gray-400 text-sm">Image</span>
         </div>
 
         <div className="p-4">
-          <h3 className="font-semibold text-gray-900 truncate">
+          <h3 className="font-medium text-gray-900 text-sm leading-snug line-clamp-2">
             {searchQuery
               ? highlightText(product.title, searchQuery)
               : product.title}
           </h3>
 
-          <StarRating rating={product.rating} reviews={product.reviews} />
-
-          <p className="text-sm text-gray-500 mt-1">{product.description}</p>
-
-          <div className="flex items-center justify-between mt-4">
-            <span className="text-lg font-bold text-gray-900">
-              ₹{product.price}
-            </span>
-
-            <button
-              onClick={() => addToCart(product)}
-              className="bg-[#1F3A8A] cursor-pointer text-white text-sm px-4 py-2 rounded-md hover:bg-[#1E40AF] transition"
-            >
-              Add to Cart
-            </button>
+          <div className="mt-1">
+            <StarRating rating={product.rating} reviews={product.reviews} />
           </div>
+
+          <p className="text-xs text-gray-500 mt-2 line-clamp-2">
+            {product.description}
+          </p>
         </div>
+      </Link>
+
+      <div className="px-4 pb-4 flex items-center justify-between">
+        <span className="text-lg font-semibold text-gray-900">
+          ₹{product.price}
+        </span>
+
+        <button
+          onClick={() => addToCart(product)}
+          className="bg-[#6d5dfc] text-white text-sm px-4 py-2 rounded-lg hover:opacity-90 transition"
+        >
+          Add
+        </button>
       </div>
-    </Link>
+    </div>
   );
 };
 

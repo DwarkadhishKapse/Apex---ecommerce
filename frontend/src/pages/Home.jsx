@@ -2,7 +2,13 @@ import React, { useEffect, useState } from "react";
 import products from "../data/products";
 import ProductCard from "../components/ProductCard";
 
-const Home = ({ addToCart, searchQuery }) => {
+const Home = ({
+  addToCart,
+  searchQuery,
+  wishlist,
+  addToWishlist,
+  removeFromWishlist,
+}) => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -55,17 +61,15 @@ const Home = ({ addToCart, searchQuery }) => {
   });
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      {/* Mobile Category Button */}
+    <div className="max-w-7xl mx-auto px-4 py-6">
       <button
         onClick={() => setIsSidebarOpen(true)}
-        className="lg:hidden mb-4 px-4 py-2 bg-[#1F3A8A] text-white rounded-lg"
+        className="lg:hidden mb-4 px-4 py-2 rounded-xl bg-[#6d5dfc] text-white shadow-sm"
       >
         Categories
       </button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* For Mobile */}
+      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
         {isSidebarOpen && (
           <div
             onClick={() => setIsSidebarOpen(false)}
@@ -73,66 +77,59 @@ const Home = ({ addToCart, searchQuery }) => {
           />
         )}
 
+        {/* CATEGORY SIDEBAR */}
         <aside
-          className={`fixed lg:static top-0 left-0 h-full w-64 bg-white z-50 p-4 transform transition-transform duration-300
-          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          lg:translate-x-0`}
+          className={`
+            fixed lg:sticky top-0 lg:top-28 left-0
+            h-full lg:h-fit w-64
+            bg-white z-40
+            p-5 rounded-r-2xl lg:rounded-2xl shadow-sm
+            transform transition-transform duration-300
+            ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+            lg:translate-x-0
+          `}
         >
           <h3 className="text-lg font-semibold mb-4">Categories</h3>
 
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => {
-                setSelectedCategory(category);
-                setIsSidebarOpen(false);
-              }}
-              className={`w-full flex items-center justify-between px-4 py-2 rounded-lg transition mb-1
-                ${
-                  selectedCategory === category
-                    ? "bg-[#1F3A8A] text-white"
-                    : "hover:bg-gray-100 text-gray-700"
-                }`}
-            >
-              <div className="flex items-center gap-2">
-                <span>{categoryIcons[category] || "📦"}</span>
-                <span className="capitalize">{category}</span>
-              </div>
+          <div className="space-y-1">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => {
+                  setSelectedCategory(category);
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-4 py-2 rounded-xl transition
+                  ${
+                    selectedCategory === category
+                      ? "bg-[#6d5dfc] text-white"
+                      : "hover:bg-gray-100 text-gray-700"
+                  }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span>{categoryIcons[category] || "📦"}</span>
+                  <span className="capitalize">{category}</span>
+                </div>
 
-              <span className="text-sm opacity-80">
-                {category === "all" ? products.length : categoryCount[category]}
-              </span>
-            </button>
-          ))}
+                <span className="text-sm opacity-80">
+                  {category === "all"
+                    ? products.length
+                    : categoryCount[category]}
+                </span>
+              </button>
+            ))}
+          </div>
         </aside>
 
-        <section className="lg:col-span-3">
-          <div className="relative mb-6">
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1F3A8A]"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 mb-4">
+        {/* PRODUCTS */}
+        <section>
+          <div className="flex items-center gap-2 mb-5">
             <input
               type="checkbox"
               id="topRated"
               checked={onlyTopRated}
               onChange={(e) => setOnlyTopRated(e.target.checked)}
             />
-
             <label
               htmlFor="topRated"
               className="text-sm text-gray-700 cursor-pointer"
@@ -141,7 +138,6 @@ const Home = ({ addToCart, searchQuery }) => {
             </label>
           </div>
 
-          {/* Product Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
             {filteredProducts.length === 0 && (
               <p className="text-gray-500 text-center col-span-full mt-10">
@@ -155,6 +151,9 @@ const Home = ({ addToCart, searchQuery }) => {
                 product={product}
                 addToCart={addToCart}
                 searchQuery={debouncedQuery}
+                wishlist={wishlist}
+                addToWishlist={addToWishlist}
+                removeFromWishlist={removeFromWishlist}
               />
             ))}
           </div>
