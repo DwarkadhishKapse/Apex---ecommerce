@@ -62,7 +62,7 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    address: [addressSchema],
+    addresses: [addressSchema],
   },
   { timestamps: true }
 );
