@@ -1,22 +1,56 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import api from "../api/axios";
+import toast from "react-hot-toast";
 
 const Login = ({ setIsAuthenticated }) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    setIsAuthenticated(true);
-    navigate("/");
+  const handleLogin = async (e) => {
+    e.preventDefault(); // 🔥 prevent page reload
+
+    if (!email || !password) {
+      toast.error("Please enter email and password");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await api.post("/auth/login", {
+        email,
+        password,
+      });
+
+      // ✅ persist token
+      localStorage.setItem("token", res.data.token);
+
+      setIsAuthenticated(true);
+      toast.success("Logged in successfully");
+
+      navigate("/");
+    } catch (error) {
+      console.error("Login failed:", error);
+
+      const message =
+        error.response?.data?.message || "Invalid email or password";
+
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border p-8">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-semibold text-gray-900">Welcome Back</h2>
+          <h2 className="text-3xl font-semibold text-gray-900">
+            Welcome Back
+          </h2>
           <p className="text-sm text-gray-500 mt-1">
             Login to continue shopping
           </p>
@@ -49,9 +83,14 @@ const Login = ({ setIsAuthenticated }) => {
 
           <button
             type="submit"
-            className="w-full bg-[#1F3A8A] text-white py-3 rounded-lg font-semibold hover:bg-[#1E40AF] transition"
+            disabled={loading}
+            className={`w-full py-3 rounded-lg font-semibold transition ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-[#1F3A8A] text-white hover:bg-[#1E40AF]"
+            }`}
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 

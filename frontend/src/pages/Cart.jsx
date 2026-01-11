@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-const Cart = ({ cart, increaseQuantity, decreaseQuantity, removeFromCart }) => {
+const Cart = ({ cart, increaseQuantity, decreaseQuantity, removeItem }) => {
   const totalAmount = cart.reduce((sum, item) => {
     return sum + item.product.price * item.quantity;
   }, 0);
@@ -24,7 +24,7 @@ const Cart = ({ cart, increaseQuantity, decreaseQuantity, removeFromCart }) => {
           ) : (
             cart.map((item) => (
               <div
-                key={item.product.id}
+                key={item.product._id}
                 className="bg-white rounded-2xl shadow-sm p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
               >
                 <div className="flex-1">
@@ -39,7 +39,7 @@ const Cart = ({ cart, increaseQuantity, decreaseQuantity, removeFromCart }) => {
                   <div className="flex items-center gap-4 mt-4">
                     <div className="flex items-center border rounded-lg overflow-hidden">
                       <button
-                        onClick={() => decreaseQuantity(item.product.id)}
+                        onClick={() => decreaseQuantity(item.product._id)}
                         className="w-9 h-9 flex items-center justify-center hover:bg-gray-100"
                       >
                         −
@@ -50,7 +50,7 @@ const Cart = ({ cart, increaseQuantity, decreaseQuantity, removeFromCart }) => {
                       </span>
 
                       <button
-                        onClick={() => increaseQuantity(item.product.id)}
+                        onClick={() => increaseQuantity(item.product._id)}
                         className="w-9 h-9 flex items-center justify-center hover:bg-gray-100"
                       >
                         +
@@ -58,7 +58,7 @@ const Cart = ({ cart, increaseQuantity, decreaseQuantity, removeFromCart }) => {
                     </div>
 
                     <button
-                      onClick={() => removeFromCart(item.product.id)}
+                      onClick={() => removeItem(item.product._id)}
                       className="text-sm text-red-500 hover:underline"
                     >
                       Remove

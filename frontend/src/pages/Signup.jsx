@@ -1,18 +1,48 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import api from "../api/axios";
+import toast from "react-hot-toast";
 
 const Signup = ({ setIsAuthenticated }) => {
-  const [name, setName] = useState("");
+  const [username, setUsername] = useState(""); // UI-only (not sent)
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
-  const handleSignup = (e) => {
-    e.preventDefault();
-    setIsAuthenticated(true);
-    navigate("/");
+  const handleSignup = async (e) => {
+    e.preventDefault(); // 🔥 REQUIRED
+
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await api.post("/auth/signup", {
+        email,
+        password, // ✅ match backend exactly
+      });
+
+      localStorage.setItem("token", res.data.token);
+      setIsAuthenticated(true);
+
+      toast.success("Account created successfully");
+      navigate("/");
+    } catch (error) {
+      console.error("Signup failed:", error);
+
+      const message =
+        error.response?.data?.message || "Signup failed";
+
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -33,8 +63,8 @@ const Signup = ({ setIsAuthenticated }) => {
             <input
               type="text"
               placeholder="Enter your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="mt-1 w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3A8A]"
               required
             />
@@ -65,7 +95,9 @@ const Signup = ({ setIsAuthenticated }) => {
           </div>
 
           <div>
-            <label className="text-sm text-gray-600">Confirm Password</label>
+            <label className="text-sm text-gray-600">
+              Confirm Password
+            </label>
             <input
               type="password"
               placeholder="Re-enter your password"
@@ -78,9 +110,14 @@ const Signup = ({ setIsAuthenticated }) => {
 
           <button
             type="submit"
-            className="w-full bg-[#1F3A8A] text-white py-3 rounded-lg font-semibold hover:bg-[#1E40AF] transition"
+            disabled={loading}
+            className={`w-full py-3 rounded-lg font-semibold transition ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-[#1F3A8A] text-white hover:bg-[#1E40AF]"
+            }`}
           >
-            Create Account
+            {loading ? "Creating account..." : "Create Account"}
           </button>
         </form>
 

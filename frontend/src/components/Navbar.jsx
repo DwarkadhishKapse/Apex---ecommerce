@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import products from "../data/products";
 import { Link, useNavigate } from "react-router-dom";
 import MiniCart from "./MiniCart";
+import products from "../data/products";
 
 const Navbar = ({
   cartCount,
+  wishlistCount,
+  ordersCount,
   isAuthenticated,
   setIsAuthenticated,
   searchQuery,
@@ -15,17 +17,17 @@ const Navbar = ({
   increaseQuantity,
   decreaseQuantity,
   removeItem,
-  wishlistCount,
-  ordersCount,
 }) => {
   const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(-1);
   const miniCartWrapperRef = useRef(null);
 
+  // reset search selection when text changes
   useEffect(() => {
     setActiveIndex(-1);
   }, [searchQuery]);
 
+  // close mini cart on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (
@@ -36,9 +38,9 @@ const Navbar = ({
         setIsMiniCartOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMiniCartOpen]);
 
   const suggestions =
@@ -51,6 +53,7 @@ const Navbar = ({
       : [];
 
   const handleLogout = () => {
+    localStorage.removeItem("token"); // 🔥 important
     setIsAuthenticated(false);
     navigate("/login");
   };
@@ -77,21 +80,26 @@ const Navbar = ({
   return (
     <nav className="bg-white sticky top-0 z-[60] border-b">
       <div className="max-w-350 mx-auto px-4 py-4 flex items-center gap-6">
-        <h1 className="text-xl font-semibold">
+        {/* LOGO */}
+        <h1
+          className="text-xl font-semibold cursor-pointer"
+          onClick={() => navigate("/")}
+        >
           Apex<span className="text-[#6d5dfc]">Store</span>
         </h1>
 
+        {/* SEARCH */}
         <div className="relative flex-1 z-[70]">
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search for products, brands and more"
-            className="w-full px-5 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#6d5dfc] outline-none"
+            placeholder="Search for products"
+            className="w-full px-5 py-3 rounded-xl border focus:ring-2 focus:ring-[#6d5dfc] outline-none"
           />
 
           {suggestions.length > 0 && (
-            <div className="absolute top-full left-0 w-full bg-white border rounded-xl shadow-xl mt-2 z-[80] overflow-hidden">
+            <div className="absolute top-full left-0 w-full bg-white border rounded-xl shadow-xl mt-2 z-[80]">
               {suggestions.map((item, index) => (
                 <div
                   key={item.id}
@@ -99,10 +107,8 @@ const Navbar = ({
                     navigate(`/product/${item.id}`);
                     setSearchQuery("");
                   }}
-                  className={`px-4 py-3 flex justify-between cursor-pointer ${
-                    index === activeIndex
-                      ? "bg-gray-100"
-                      : "hover:bg-gray-50"
+                  className={`px-4 py-3 cursor-pointer flex justify-between ${
+                    index === activeIndex ? "bg-gray-100" : "hover:bg-gray-50"
                   }`}
                 >
                   <span>{item.title}</span>
@@ -113,6 +119,7 @@ const Navbar = ({
           )}
         </div>
 
+        {/* WISHLIST */}
         <Link to="/wishlist" className="relative">
           ❤️
           {wishlistCount > 0 && (
@@ -122,12 +129,10 @@ const Navbar = ({
           )}
         </Link>
 
+        {/* CART */}
         <div ref={miniCartWrapperRef} className="relative">
           <button onClick={() => setIsMiniCartOpen((p) => !p)}>
-            Cart
-            {cartCount > 0 && (
-              <span className="ml-1 text-sm">({cartCount})</span>
-            )}
+            Cart {cartCount > 0 && <span>({cartCount})</span>}
           </button>
 
           {isMiniCartOpen && (
@@ -141,8 +146,10 @@ const Navbar = ({
           )}
         </div>
 
-        <Link to="/orders">Orders ({ordersCount})</Link>
+        {/* ORDERS */}
+        <Link to="/orders">Orders {ordersCount > 0 && `(${ordersCount})`}</Link>
 
+        {/* AUTH */}
         {isAuthenticated ? (
           <button onClick={handleLogout} className="text-red-600">
             Logout

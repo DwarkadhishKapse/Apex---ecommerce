@@ -7,8 +7,7 @@ const ProductCard = ({
   addToCart,
   searchQuery,
   wishlist = [],
-  addToWishlist,
-  removeFromWishlist,
+  toggleWishlist,
 }) => {
   const highlightText = (text, query) => {
     if (!query) return text;
@@ -28,7 +27,7 @@ const ProductCard = ({
   };
 
   const isWishListed =
-    wishlist?.some((item) => item.product.id === product.id) || false;
+    wishlist?.some((item) => item.id === product.id) || false;
 
   return (
     <div className="relative bg-white rounded-2xl border hover:shadow-lg transition overflow-hidden">
@@ -36,9 +35,7 @@ const ProductCard = ({
         onClick={(e) => {
           e.stopPropagation();
           e.preventDefault();
-          isWishListed
-            ? removeFromWishlist(product.id)
-            : addToWishlist(product);
+          toggleWishlist(product.id);
         }}
         className="absolute top-4 right-4 z-10 text-xl bg-white rounded-full w-9 h-9 flex items-center justify-center shadow"
       >

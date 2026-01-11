@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
+import api from "./api/axios";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import Home from "./pages/Home";
 import Navbar from "./components/Navbar";
 import Cart from "./pages/Cart";
@@ -14,11 +16,93 @@ import Addresses from "./pages/Addresses";
 import OrderDetails from "./pages/OrderDetails";
 
 const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // ---------------- AUTH STATE ----------------
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    !!localStorage.getItem("token")
+  );
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // ---------------- GLOBAL STATES ----------------
+  const [cart, setCart] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
+  const [ordersCount, setOrdersCount] = useState(0);
+  const [addresses, setAddresses] = useState([]);
+
+  // ---------------- UI STATES ----------------
   const [searchQuery, setSearchQuery] = useState("");
   const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
 
+  // ---------------- RESTORE SESSION ON REFRESH ----------------
+  useEffect(() => {
+    const restoreSession = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        setAuthLoading(false);
+        return;
+      }
+
+      try {
+        await api.get("/auth/me");
+        setIsAuthenticated(true);
+      } catch {
+        localStorage.removeItem("token");
+        setIsAuthenticated(false);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    restoreSession();
+  }, []);
+
+  // ---------------- FETCH ORDERS COUNT ----------------
+  const fetchOrdersCount = async () => {
+    try {
+      const res = await api.get("/orders");
+      setOrdersCount(res.data.length);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    fetchOrdersCount();
+  }, [isAuthenticated]);
+
+  // ---------------- FETCH CART ----------------
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    api
+      .get("/cart")
+      .then((res) => setCart(res.data))
+      .catch(console.error);
+  }, [isAuthenticated]);
+
+  // ---------------- FETCH WISHLIST ----------------
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    api
+      .get("/wishlist")
+      .then((res) => setWishlist(res.data))
+      .catch(console.error);
+  }, [isAuthenticated]);
+
+  // ---------------- FETCH ADDRESSES ----------------
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    api
+      .get("/addresses")
+      .then((res) => setAddresses(res.data))
+      .catch(console.error);
+  }, [isAuthenticated]);
+
+  // ---------------- ADDRESS FORM STATE ----------------
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -38,24 +122,6 @@ const App = () => {
 
   const handleAddAddress = (e) => {
     e.preventDefault();
-
-    if (editingAddress) {
-      setAddresses((prev) =>
-        prev.map((addr) =>
-          addr.id === editingAddress.id
-            ? { ...formData, id: editingAddress.id }
-            : addr
-        )
-      );
-      setEditingAddress(null);
-    } else {
-      const newAddress = {
-        id: `ADDR-${Date.now()}`,
-        ...formData,
-      };
-      setAddresses((prev) => [...prev, newAddress]);
-    }
-
     setFormData({
       name: "",
       phone: "",
@@ -67,244 +133,154 @@ const App = () => {
     });
   };
 
-  const [orders, setOrders] = useState(() => {
+  // ---------------- CART ACTIONS ----------------
+  const addToCart = async (product, quantity = 1) => {
     try {
-      const saved = localStorage.getItem("orders");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
+      const res = await api.post("/cart/add", {
+        productId: product.id,
+        quantity,
+      });
+      setCart(res.data);
+    } catch (error) {
+      console.error(error);
     }
-  });
+  };
 
-  useEffect(() => {
-    localStorage.setItem("orders", JSON.stringify(orders));
-  }, [orders]);
-
-  const [wishlist, setWishlist] = useState(() => {
-    try {
-      const saved = localStorage.getItem("wishlist");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem("wishlist", JSON.stringify(wishlist));
-  }, [wishlist]);
-
-  const [cart, setCart] = useState(() => {
-    try {
-      const saved = localStorage.getItem("cart");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart));
-  }, [cart]);
-
-  const [addresses, setAddresses] = useState(() => {
-    try {
-      const saved = localStorage.getItem("addresses");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem("addresses", JSON.stringify(addresses));
-  }, [addresses]);
-
-  const addToCart = (product, quantity = 1) => {
-    if (!product) return;
-
-    setCart((prev) => {
-      const existing = prev.find(
-        (item) => item.product.id === product.id
-      );
-
-      if (existing) {
-        return prev.map((item) =>
-          item.product.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      }
-
-      return [...prev, { product, quantity }];
+  const increaseQuantity = async (productId) => {
+    const res = await api.put("/cart/update", {
+      productId,
+      action: "increase",
     });
+    setCart(res.data);
   };
 
-  const addToWishlist = (product) => {
-    setWishlist((prev) => {
-      if (prev.some((item) => item.product.id === product.id)) return prev;
-      return [...prev, { product }];
+  const decreaseQuantity = async (productId) => {
+    const res = await api.put("/cart/update", {
+      productId,
+      action: "decrease",
     });
+    setCart(res.data);
   };
 
-  const removeFromWishlist = (productId) => {
-    setWishlist((prev) =>
-      prev.filter((item) => item.product.id !== productId)
-    );
+  const removeItem = async (productId) => {
+    const res = await api.delete(`/cart/remove/${productId}`);
+    setCart(res.data);
   };
 
-  const moveToCart = (product) => {
-    removeFromWishlist(product.id);
-    addToCart(product);
-  };
-
-  const increaseQuantity = (productId) => {
-    setCart((prev) =>
-      prev.map((item) =>
-        item.product.id === productId
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      )
-    );
-  };
-
-  const decreaseQuantity = (productId) => {
-    setCart((prev) =>
-      prev
-        .map((item) =>
-          item.product.id === productId
-            ? { ...item, quantity: item.quantity - 1 }
-            : item
-        )
-        .filter((item) => item.quantity > 0)
-    );
-  };
-
-  const removeItem = (productId) => {
-    setCart((prev) =>
-      prev.filter((item) => item.product.id !== productId)
-    );
-  };
-
-  const clearCart = () => {
+  const clearCart = async () => {
+    await api.post("/cart/clear");
     setCart([]);
-    localStorage.removeItem("cart");
   };
 
+  // ---------------- WISHLIST ACTIONS ----------------
+  const toggleWishlist = async (productId) => {
+    const res = await api.post("/wishlist/toggle", { productId });
+    setWishlist(res.data);
+  };
+
+  const moveToCart = async (product) => {
+    await addToCart(product);
+    await toggleWishlist(product.id);
+  };
+
+  // ---------------- LOADING SCREEN ----------------
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        Restoring session...
+      </div>
+    );
+  }
+
+  // ---------------- ROUTES ----------------
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-linear-to-br from-[#f5f3ff] via-[#fafafa] to-[#eef2ff]">
-        <Navbar
-          cartCount={cart.length}
-          isAuthenticated={isAuthenticated}
-          setIsAuthenticated={setIsAuthenticated}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          cart={cart}
-          isMiniCartOpen={isMiniCartOpen}
-          setIsMiniCartOpen={setIsMiniCartOpen}
-          increaseQuantity={increaseQuantity}
-          decreaseQuantity={decreaseQuantity}
-          removeItem={removeItem}
-          wishlistCount={wishlist.length}
-          ordersCount={orders.length}
-        />
+      <Navbar
+        cartCount={cart.length}
+        wishlistCount={wishlist.length}
+        ordersCount={ordersCount}
+        isAuthenticated={isAuthenticated}
+        setIsAuthenticated={setIsAuthenticated}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        cart={cart}
+        isMiniCartOpen={isMiniCartOpen}
+        setIsMiniCartOpen={setIsMiniCartOpen}
+        increaseQuantity={increaseQuantity}
+        decreaseQuantity={decreaseQuantity}
+        removeItem={removeItem}
+      />
 
-        <main className="max-w-350 mx-auto px-4 py-6">
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <Home
-                  addToCart={addToCart}
-                  searchQuery={searchQuery}
-                  wishlist={wishlist}
-                  addToWishlist={addToWishlist}
-                  removeFromWishlist={removeFromWishlist}
+      <main className="max-w-350 mx-auto px-4 py-6">
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <Home
+                addToCart={addToCart}
+                searchQuery={searchQuery}
+                wishlist={wishlist}
+                toggleWishlist={toggleWishlist}
+              />
+            }
+          />
+
+          <Route
+            path="/product/:id"
+            element={<ProductDetails addToCart={addToCart} />}
+          />
+
+          <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
+          <Route path="/signup" element={<Signup setIsAuthenticated={setIsAuthenticated} />} />
+
+          <Route
+            path="/cart"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <Cart
+                  cart={cart}
+                  increaseQuantity={increaseQuantity}
+                  decreaseQuantity={decreaseQuantity}
+                  removeItem={removeItem}
                 />
-              }
-            />
+              </ProtectedRoute>
+            }
+          />
 
-            <Route
-              path="/product/:id"
-              element={<ProductDetails addToCart={addToCart} />}
-            />
-
-            <Route
-              path="/login"
-              element={<Login setIsAuthenticated={setIsAuthenticated} />}
-            />
-
-            <Route
-              path="/signup"
-              element={<Signup setIsAuthenticated={setIsAuthenticated} />}
-            />
-
-            <Route
-              path="/cart"
-              element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <Cart
-                    cart={cart}
-                    increaseQuantity={increaseQuantity}
-                    decreaseQuantity={decreaseQuantity}
-                    removeItem={removeItem}
-                  />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/checkout"
-              element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <Checkout
-                    cart={cart}
-                    setCart={setCart}
-                    clearCart={clearCart}
-                    orders={orders}
-                    setOrders={setOrders}
-                    addresses={addresses}
-                  />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/wishlist"
-              element={
-                <Wishlist
-                  wishlist={wishlist}
-                  removeFromWishlist={removeFromWishlist}
-                  moveToCart={moveToCart}
-                />
-              }
-            />
-
-            <Route path="/orders" element={<Orders orders={orders} />} />
-
-            <Route
-              path="/orders/:orderId"
-              element={<OrderDetails orders={orders} />}
-            />
-
-            <Route
-              path="/addresses"
-              element={
-                <Addresses
+          <Route
+            path="/checkout"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <Checkout
+                  cart={cart}
+                  clearCart={clearCart}
                   addresses={addresses}
-                  setAddresses={setAddresses}
-                  handleAddAddress={handleAddAddress}
-                  handleChange={handleChange}
-                  formData={formData}
-                  setFormData={setFormData}
-                  editingAddress={editingAddress}
-                  setEditingAddress={setEditingAddress}
+                  onOrderPlaced={fetchOrdersCount}
                 />
-              }
-            />
-          </Routes>
-        </main>
-      </div>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="/wishlist" element={<Wishlist wishlist={wishlist} moveToCart={moveToCart} toggleWishlist={toggleWishlist} />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/orders/:orderId" element={<OrderDetails />} />
+
+          <Route
+            path="/addresses"
+            element={
+              <Addresses
+                addresses={addresses}
+                setAddresses={setAddresses}
+                handleAddAddress={handleAddAddress}
+                handleChange={handleChange}
+                formData={formData}
+                editingAddress={editingAddress}
+                setEditingAddress={setEditingAddress}
+              />
+            }
+          />
+        </Routes>
+      </main>
     </BrowserRouter>
   );
 };

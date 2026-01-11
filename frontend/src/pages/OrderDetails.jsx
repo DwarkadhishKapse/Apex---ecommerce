@@ -1,8 +1,12 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import api from "../api/axios";
+import toast from "react-hot-toast";
 
-const OrderDetails = ({ orders }) => {
+const OrderDetails = () => {
   const { orderId } = useParams();
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const statusSteps = [
     "Placed",
@@ -12,11 +16,24 @@ const OrderDetails = ({ orders }) => {
     "Delivered",
   ];
 
-  if (!orders || orders.length === 0) {
+  useEffect(() => {
+    const fetchOrder = async () => {
+      try {
+        const res = await api.get(`/orders/${orderId}`);
+        setOrder(res.data);
+      } catch (error) {
+        toast.error("Order not found");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrder();
+  }, [orderId]);
+
+  if (loading) {
     return <div className="p-6 text-gray-500">Loading order details</div>;
   }
-
-  const order = orders.find((o) => String(o.id) === String(orderId));
 
   if (!order) {
     return (
@@ -71,12 +88,12 @@ const OrderDetails = ({ orders }) => {
             <div className="space-y-4">
               {order.items.map((item) => (
                 <div
-                  key={item.product.id}
+                  key={item.productId}
                   className="flex justify-between items-start border-b last:border-b-0 pb-4 last:pb-0"
                 >
                   <div>
                     <p className="font-medium text-gray-900">
-                      {item.product.title}
+                      {item.title}
                     </p>
                     <p className="text-sm text-gray-500 mt-1">
                       Qty: {item.quantity}
@@ -84,7 +101,7 @@ const OrderDetails = ({ orders }) => {
                   </div>
 
                   <span className="font-semibold text-gray-900">
-                    ₹{item.product.price * item.quantity}
+                    ₹{item.price * item.quantity}
                   </span>
                 </div>
               ))}
@@ -97,22 +114,22 @@ const OrderDetails = ({ orders }) => {
             </h3>
 
             <p className="font-medium text-gray-900">
-              {order.deliveryAddress.name}
+              {order.shippingAddress.name}
             </p>
 
             <p className="text-sm text-gray-600 mt-1">
-              {order.deliveryAddress.street},{" "}
-              {order.deliveryAddress.city},{" "}
-              {order.deliveryAddress.state} -{" "}
-              {order.deliveryAddress.pincode}
+              {order.shippingAddress.street},{" "}
+              {order.shippingAddress.city},{" "}
+              {order.shippingAddress.state} -{" "}
+              {order.shippingAddress.pincode}
             </p>
 
             <p className="text-sm text-gray-600 mt-1">
-              Phone: {order.deliveryAddress.phone}
+              Phone: {order.shippingAddress.phone}
             </p>
 
             <span className="inline-block mt-3 text-xs bg-gray-100 px-3 py-1 rounded-full">
-              {order.deliveryAddress.type}
+              {order.shippingAddress.type}
             </span>
           </div>
         </div>
@@ -124,7 +141,12 @@ const OrderDetails = ({ orders }) => {
 
           <div className="flex justify-between text-gray-700 mb-3">
             <span>Items Total</span>
-            <span>₹{order.totalAmount}</span>
+            <span>₹{
+              order.items.reduce(
+                (sum, item) => sum + item.price * item.quantity,
+                0
+              )
+            }</span>
           </div>
 
           <div className="flex justify-between text-gray-700 mb-3">
@@ -134,7 +156,12 @@ const OrderDetails = ({ orders }) => {
 
           <div className="border-t pt-4 flex justify-between font-semibold text-lg">
             <span>Total Paid</span>
-            <span>₹{order.totalAmount}</span>
+            <span>₹{
+              order.items.reduce(
+                (sum, item) => sum + item.price * item.quantity,
+                0
+              )
+            }</span>
           </div>
 
           <p className="text-xs text-gray-600 mt-4">

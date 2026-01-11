@@ -57,7 +57,11 @@ export const placeOrder = async (req, res) => {
     user.cart = [];
     await user.save();
 
-    res.status(201).json(order);
+    res.status(201).json({
+      id: order._id,
+      status: order.status,
+      createdAt: order.createdAt,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to place order" });

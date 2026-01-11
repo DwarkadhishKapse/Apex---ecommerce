@@ -1,18 +1,14 @@
 import React, { useEffect, useState } from "react";
-import products from "../data/products";
 import ProductCard from "../components/ProductCard";
+import api from "../api/axios";
 
-const Home = ({
-  addToCart,
-  searchQuery,
-  wishlist,
-  addToWishlist,
-  removeFromWishlist,
-}) => {
+const Home = ({ addToCart, searchQuery, wishlist, toggleWishlist }) => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [onlyTopRated, setOnlyTopRated] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -20,6 +16,20 @@ const Home = ({
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await api.get("/products");
+        setProducts(res.data);
+      } catch (error) {
+        console.error("Failed to fetch products", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   const categoryIcons = {
     all: "🛍️",
@@ -59,6 +69,10 @@ const Home = ({
 
     return matchesCategory && matchesSearch && matchesRating;
   });
+
+  if (loading) {
+    return <p className="p-6 text-gray-500">Loading Products...</p>;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
@@ -152,8 +166,7 @@ const Home = ({
                 addToCart={addToCart}
                 searchQuery={debouncedQuery}
                 wishlist={wishlist}
-                addToWishlist={addToWishlist}
-                removeFromWishlist={removeFromWishlist}
+                toggleWishlist={toggleWishlist}
               />
             ))}
           </div>
