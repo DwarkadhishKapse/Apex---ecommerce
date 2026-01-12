@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import MiniCart from "./MiniCart";
-import products from "../data/products";
 
 const Navbar = ({
+  products = [],
   cartCount,
   wishlistCount,
   ordersCount,

@@ -27,7 +27,11 @@ const Wishlist = ({ wishlist = [], toggleWishlist, moveToCart }) => {
               className="bg-white rounded-2xl shadow-sm p-4 flex flex-col"
             >
               <div className="h-44 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
-                <span className="text-gray-400 text-sm">Image</span>
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="w-full h-full object-contain"
+                />
               </div>
 
               <h3 className="font-medium text-gray-900 truncate">

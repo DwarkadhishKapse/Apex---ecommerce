@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import api from "../api/axios";
+import ProductCardSkeleton from "../components/ProductCardSkeleton";
 
 const ProductDetails = ({ addToCart }) => {
   const [quantity, setQuantity] = useState(1);
@@ -14,7 +15,6 @@ const ProductDetails = ({ addToCart }) => {
 
   const handleWheel = (e) => {
     if (scrollRef.current) {
-      e.preventDefault();
       scrollRef.current.scrollLeft += e.deltaY;
     }
   };
@@ -22,23 +22,38 @@ const ProductDetails = ({ addToCart }) => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await api.get(`/products/${id}`);
-        setProduct(res.data);
+        setLoading(true);
 
-        const similarRes = await api.get(
-          `/products?category=${res.data.category}`
+        // 1️⃣ Fetch product
+        const productRes = await api.get(`/products/${id}`);
+        const productData = productRes.data;
+        setProduct(productData);
+
+        // 2️⃣ Fetch similar products
+        const similarRes = await api.get("/products", {
+          params: {
+            category: productData.category, // ✅ RAW CATEGORY
+          },
+        });
+
+        // 3️⃣ Remove current product
+        const filtered = similarRes.data.filter(
+          (item) => item.id !== productData.id
         );
-      } catch (error) {
-        console.error("Failed to fetch product", error);
+
+        setSimilarProducts(filtered);
+      } catch (err) {
+        console.error("Failed to fetch product", err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchProduct();
   }, [id]);
 
   if (loading) {
-    return <p className="p-6 text-gray-500">Loading Product...</p>;
+    return <ProductCardSkeleton />;
   }
 
   if (!product) {
@@ -60,7 +75,11 @@ const ProductDetails = ({ addToCart }) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         <div className="bg-white rounded-2xl shadow-sm p-8">
           <div className="h-105 bg-gray-100 rounded-xl flex items-center justify-center">
-            <span className="text-gray-400">Product Image</span>
+            <img
+              src={product.images?.[0]}
+              alt={product.title}
+              className="w-full h-full object-contain"
+            />
           </div>
         </div>
 
@@ -146,6 +165,10 @@ const ProductDetails = ({ addToCart }) => {
         </div>
       </div>
 
+      {similarProducts.length === 0 && (
+        <p className="text-gray-500 mt-6">No similar products found</p>
+      )}
+
       {similarProducts.length > 0 && (
         <div className="mt-20">
           <h2 className="text-2xl font-semibold mb-6">Similar Products</h2>
@@ -156,11 +179,15 @@ const ProductDetails = ({ addToCart }) => {
             className="overflow-x-auto"
           >
             <div className="flex gap-6 w-max pb-2">
-              {similarProducts.map((item) => (
-                <div key={item.id} className="w-65 shrink-0">
-                  <ProductCard product={item} addToCart={addToCart} />
-                </div>
-              ))}
+              {loading
+                ? Array(5)
+                    .fill(0)
+                    .map((_, i) => <ProductCardSkeleton key={i} />)
+                : similarProducts.map((item) => (
+                    <div key={item.id} className="w-65 shrink-0">
+                      <ProductCard product={item} addToCart={addToCart} />
+                    </div>
+                  ))}
             </div>
           </div>
         </div>

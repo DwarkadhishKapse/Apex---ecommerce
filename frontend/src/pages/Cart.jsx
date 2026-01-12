@@ -39,7 +39,7 @@ const Cart = ({ cart, increaseQuantity, decreaseQuantity, removeItem }) => {
                   <div className="flex items-center gap-4 mt-4">
                     <div className="flex items-center border rounded-lg overflow-hidden">
                       <button
-                        onClick={() => decreaseQuantity(item.product._id)}
+                        onClick={() => decreaseQuantity(item.product.id)}
                         className="w-9 h-9 flex items-center justify-center hover:bg-gray-100"
                       >
                         −
@@ -50,7 +50,7 @@ const Cart = ({ cart, increaseQuantity, decreaseQuantity, removeItem }) => {
                       </span>
 
                       <button
-                        onClick={() => increaseQuantity(item.product._id)}
+                        onClick={() => increaseQuantity(item.product.id)}
                         className="w-9 h-9 flex items-center justify-center hover:bg-gray-100"
                       >
                         +
@@ -58,7 +58,7 @@ const Cart = ({ cart, increaseQuantity, decreaseQuantity, removeItem }) => {
                     </div>
 
                     <button
-                      onClick={() => removeItem(item.product._id)}
+                      onClick={() => removeItem(item.product.id)}
                       className="text-sm text-red-500 hover:underline"
                     >
                       Remove

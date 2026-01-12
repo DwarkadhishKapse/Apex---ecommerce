@@ -1,28 +1,29 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import api from "../api/axios";
 import toast from "react-hot-toast";
 
 const Addresses = ({
   addresses,
   setAddresses,
-  formData,
-  setFormData,
   editingAddress,
   setEditingAddress,
 }) => {
-  useEffect(() => {
-    api
-      .get("/addresses")
-      .then((res) => setAddresses(res.data))
-      .catch(() => toast.error("Failed to load addresses"));
-  }, []);
-
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
   };
+
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    street: "",
+    city: "",
+    state: "",
+    pincode: "",
+    type: "Home",
+  });
 
   const resetForm = () => {
     setFormData({

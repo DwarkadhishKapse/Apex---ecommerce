@@ -30,8 +30,8 @@ const productSchema = new mongoose.Schema(
       max: 5,
     },
     reviewsCount: {
-      type: String,
-      required: true,
+      type: Number,
+      default: 0,
       min: 0,
     },
 

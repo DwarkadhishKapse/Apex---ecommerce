@@ -44,7 +44,11 @@ const ProductCard = ({
 
       <Link to={`/product/${product.id}`} className="block">
         <div className="h-56 bg-gray-100 flex items-center justify-center">
-          <span className="text-gray-400 text-sm">Image</span>
+          <img
+            src={product.image}
+            alt={product.title}
+            className="w-full h-full object-contain"
+          />
         </div>
 
         <div className="p-4">
@@ -73,7 +77,7 @@ const ProductCard = ({
           onClick={() => addToCart(product)}
           className="bg-[#6d5dfc] text-white text-sm px-4 py-2 rounded-lg hover:opacity-90 transition"
         >
-          Add
+          Add to cart
         </button>
       </div>
     </div>

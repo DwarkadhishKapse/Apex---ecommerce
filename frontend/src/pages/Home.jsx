@@ -33,17 +33,17 @@ const Home = ({ addToCart, searchQuery, wishlist, toggleWishlist }) => {
 
   const categoryIcons = {
     all: "🛍️",
-    Accessories: "🛍️",
-    Bags: "🎒",
-    Electronics: "📱",
-    Fashion: "👕",
-    Fitness: "🏋️‍♂️",
-    Footwear: "👟",
-    Furniture: "🪑",
-    Home: "🏠",
-    Books: "📚",
-    Lifestyle: "😎",
-    Stationery: "📝",
+    accessories: "🛍️",
+    bags: "🎒",
+    electronics: "📱",
+    fashion: "👕",
+    fitness: "🏋️‍♂️",
+    footwear: "👟",
+    furniture: "🪑",
+    home: "🏠",
+    books: "📚",
+    lifestyle: "😎",
+    stationery: "📝",
   };
 
   const categories = [

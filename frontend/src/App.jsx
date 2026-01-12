@@ -1,39 +1,38 @@
 import React, { useEffect, useState } from "react";
-import api from "./api/axios";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import api from "./api/axios";
 
 import Home from "./pages/Home";
-import Navbar from "./components/Navbar";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
-import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import ProductDetails from "./pages/ProductDetails";
 import Wishlist from "./pages/Wishlist";
 import Orders from "./pages/Orders";
 import Addresses from "./pages/Addresses";
+import ProductDetails from "./pages/ProductDetails";
 import OrderDetails from "./pages/OrderDetails";
 
+import Navbar from "./components/Navbar";
+import ProtectedRoute from "./components/ProtectedRoute";
+
 const App = () => {
-  // ---------------- AUTH STATE ----------------
   const [isAuthenticated, setIsAuthenticated] = useState(
     !!localStorage.getItem("token")
   );
   const [authLoading, setAuthLoading] = useState(true);
 
-  // ---------------- GLOBAL STATES ----------------
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
-  const [ordersCount, setOrdersCount] = useState(0);
   const [addresses, setAddresses] = useState([]);
+  const [ordersCount, setOrdersCount] = useState(0);
 
-  // ---------------- UI STATES ----------------
   const [searchQuery, setSearchQuery] = useState("");
   const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
 
-  // ---------------- RESTORE SESSION ON REFRESH ----------------
+  /* ======================================================
+     RESTORE LOGIN SESSION ON PAGE REFRESH */
   useEffect(() => {
     const restoreSession = async () => {
       const token = localStorage.getItem("token");
@@ -46,7 +45,7 @@ const App = () => {
       try {
         await api.get("/auth/me");
         setIsAuthenticated(true);
-      } catch {
+      } catch (err) {
         localStorage.removeItem("token");
         setIsAuthenticated(false);
       } finally {
@@ -57,13 +56,14 @@ const App = () => {
     restoreSession();
   }, []);
 
-  // ---------------- FETCH ORDERS COUNT ----------------
+  /* ======================================================
+     FETCH ORDERS COUNT (for Navbar badge) */
   const fetchOrdersCount = async () => {
     try {
       const res = await api.get("/orders");
       setOrdersCount(res.data.length);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error("Failed to fetch orders count", err);
     }
   };
 
@@ -72,7 +72,6 @@ const App = () => {
     fetchOrdersCount();
   }, [isAuthenticated]);
 
-  // ---------------- FETCH CART ----------------
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -82,7 +81,6 @@ const App = () => {
       .catch(console.error);
   }, [isAuthenticated]);
 
-  // ---------------- FETCH WISHLIST ----------------
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -92,7 +90,6 @@ const App = () => {
       .catch(console.error);
   }, [isAuthenticated]);
 
-  // ---------------- FETCH ADDRESSES ----------------
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -102,38 +99,6 @@ const App = () => {
       .catch(console.error);
   }, [isAuthenticated]);
 
-  // ---------------- ADDRESS FORM STATE ----------------
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    street: "",
-    city: "",
-    state: "",
-    pincode: "",
-    type: "Home",
-  });
-
-  const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
-
-  const handleAddAddress = (e) => {
-    e.preventDefault();
-    setFormData({
-      name: "",
-      phone: "",
-      street: "",
-      city: "",
-      state: "",
-      pincode: "",
-      type: "Home",
-    });
-  };
-
-  // ---------------- CART ACTIONS ----------------
   const addToCart = async (product, quantity = 1) => {
     try {
       const res = await api.post("/cart/add", {
@@ -141,41 +106,69 @@ const App = () => {
         quantity,
       });
       setCart(res.data);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error("Add to cart failed", err);
     }
   };
 
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    api
+      .get("/products")
+      .then((res) => setProducts(res.data))
+      .catch(console.error);
+  }, []);
+
   const increaseQuantity = async (productId) => {
-    const res = await api.put("/cart/update", {
-      productId,
-      action: "increase",
-    });
-    setCart(res.data);
+    try {
+      const res = await api.put("/cart/update", {
+        productId,
+        action: "increase",
+      });
+      setCart(res.data);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const decreaseQuantity = async (productId) => {
-    const res = await api.put("/cart/update", {
-      productId,
-      action: "decrease",
-    });
-    setCart(res.data);
+    try {
+      const res = await api.put("/cart/update", {
+        productId,
+        action: "decrease",
+      });
+      setCart(res.data);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const removeItem = async (productId) => {
-    const res = await api.delete(`/cart/remove/${productId}`);
-    setCart(res.data);
+    try {
+      const res = await api.delete(`/cart/remove/${productId}`);
+      setCart(res.data);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const clearCart = async () => {
-    await api.post("/cart/clear");
-    setCart([]);
+    try {
+      await api.post("/cart/clear");
+      setCart([]);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  // ---------------- WISHLIST ACTIONS ----------------
   const toggleWishlist = async (productId) => {
-    const res = await api.post("/wishlist/toggle", { productId });
-    setWishlist(res.data);
+    try {
+      const res = await api.post("/wishlist/toggle", { productId });
+      setWishlist(res.data);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const moveToCart = async (product) => {
@@ -183,7 +176,6 @@ const App = () => {
     await toggleWishlist(product.id);
   };
 
-  // ---------------- LOADING SCREEN ----------------
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-500">
@@ -192,10 +184,10 @@ const App = () => {
     );
   }
 
-  // ---------------- ROUTES ----------------
   return (
     <BrowserRouter>
       <Navbar
+        products={products}
         cartCount={cart.length}
         wishlistCount={wishlist.length}
         ordersCount={ordersCount}
@@ -230,8 +222,14 @@ const App = () => {
             element={<ProductDetails addToCart={addToCart} />}
           />
 
-          <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
-          <Route path="/signup" element={<Signup setIsAuthenticated={setIsAuthenticated} />} />
+          <Route
+            path="/login"
+            element={<Login setIsAuthenticated={setIsAuthenticated} />}
+          />
+          <Route
+            path="/signup"
+            element={<Signup setIsAuthenticated={setIsAuthenticated} />}
+          />
 
           <Route
             path="/cart"
@@ -261,7 +259,17 @@ const App = () => {
             }
           />
 
-          <Route path="/wishlist" element={<Wishlist wishlist={wishlist} moveToCart={moveToCart} toggleWishlist={toggleWishlist} />} />
+          <Route
+            path="/wishlist"
+            element={
+              <Wishlist
+                wishlist={wishlist}
+                moveToCart={moveToCart}
+                toggleWishlist={toggleWishlist}
+              />
+            }
+          />
+
           <Route path="/orders" element={<Orders />} />
           <Route path="/orders/:orderId" element={<OrderDetails />} />
 
@@ -271,9 +279,6 @@ const App = () => {
               <Addresses
                 addresses={addresses}
                 setAddresses={setAddresses}
-                handleAddAddress={handleAddAddress}
-                handleChange={handleChange}
-                formData={formData}
                 editingAddress={editingAddress}
                 setEditingAddress={setEditingAddress}
               />
